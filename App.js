@@ -1,60 +1,72 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as Font from 'expo-font';
 
-import ThemeProvider, { useTheme } from './contexts/ThemeContext'; // Import du contexte
-import Profile from './screens/Profile';
-import Map from './screens/Map';
-import Settings from './screens/Settings';
+import ThemeProvider from './contexts/ThemeContext';
+import Login from './screens/Login';
+import CreateAccount from './screens/CreateAccount';
+import BottomTabNavigator from './components/BottomTabNavigator';
 
-const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-// Composant principal enveloppé par ThemeProvider
 export default function App() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [fontsLoaded, setFontsLoaded] = useState(false);
+
+    useEffect(() => {
+        async function loadFonts() {
+            await Font.loadAsync({
+                'ZenDots': require('./assets/fonts/ZenDots-Regular.ttf'),
+            });
+            setFontsLoaded(true);
+        }
+
+        loadFonts();
+    }, []);
+
+    if (!fontsLoaded) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#FFD941" />
+            </View>
+        );
+    }
+
     return (
         <ThemeProvider>
             <NavigationContainer>
-                <ThemedApp />
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                    {!isAuthenticated ? (
+                        // Auth Stack
+                        <>
+                            <Stack.Screen name="Login">
+                                {(props) => (
+                                    <Login
+                                        {...props}
+                                        onLogin={() => setIsAuthenticated(true)}
+                                    />
+                                )}
+                            </Stack.Screen>
+                            <Stack.Screen name="CreateAccount" component={CreateAccount} />
+                        </>
+                    ) : (
+                        // Main App Stack
+                        <Stack.Screen name="MainApp">
+                            {(props) => (
+                                <BottomTabNavigator
+                                    {...props}
+                                    onLogout={() => {
+                                        setIsAuthenticated(false); // Réinitialiser l'authentification
+                                    }}
+                                />
+                            )}
+                        </Stack.Screen>
+
+                    )}
+                </Stack.Navigator>
             </NavigationContainer>
         </ThemeProvider>
     );
 }
-
-// Composant utilisant le thème pour appliquer les styles globaux
-function ThemedApp() {
-    const { theme, themes } = useTheme(); // Récupère le thème et ses styles
-
-    return (
-        <View style={[styles.container, { backgroundColor: themes[theme].backgroundColor }]}>
-            <Tab.Navigator
-                initialRouteName="Profile"
-                screenOptions={({ route }) => ({
-                    tabBarIcon: ({ focused, color, size }) => {
-                        let iconName;
-                        if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
-                        else if (route.name === 'Map') iconName = focused ? 'map' : 'map-outline';
-                        else if (route.name === 'Settings') iconName = focused ? 'settings' : 'settings-outline';
-
-                        return <Ionicons name={iconName} size={size} color={color} />;
-                    },
-                    tabBarStyle: { backgroundColor: '#FFD941' },
-                    tabBarActiveTintColor: '#2D2D2D',
-                    tabBarInactiveTintColor: '#2D2D2D',
-                    headerShown: false,
-                })}
-            >
-                <Tab.Screen name="Profile" component={Profile} />
-                <Tab.Screen name="Map" component={Map} />
-                <Tab.Screen name="Settings" component={Settings} />
-            </Tab.Navigator>
-        </View>
-    );
-}
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-});

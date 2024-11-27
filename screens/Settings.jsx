@@ -1,16 +1,19 @@
-import React , { useContext } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import Header from '../components/Header';
 
-export default function Settings() {
-    const { theme, themes, toggleTheme } = useTheme(); // Récupère le contexte
+export default function Settings({ onLogout }) {
+    const { theme, themes, toggleTheme } = useTheme();
 
     return (
         <View style={[styles.container, { backgroundColor: themes[theme].backgroundColor }]}>
             <Header username="Camille22" />
-            <Text style={{ color: themes[theme].textColor, fontSize: 20 }}>Settings</Text>
-            <Button title="Toggle Theme" onPress={toggleTheme} />
+            <Button title="Switch Theme" onPress={toggleTheme} />
+
+            <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
+                <Text style={styles.logoutText}>Log out</Text>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -20,6 +23,19 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 70, // Hauteur du header
+        paddingTop: 70,
+    },
+    logoutButton: {
+        marginTop: 20,
+        padding: 10,
+        borderRadius: 5,
+        backgroundColor: '#FFD941',
+        width: '50%',
+        alignItems: 'center',
+    },
+    logoutText: {
+        color: '#2D2D2D',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
 });
