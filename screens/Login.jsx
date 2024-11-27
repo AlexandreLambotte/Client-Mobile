@@ -8,9 +8,8 @@ export default function Login({ onLogin }) {
     const navigation = useNavigation();
 
     const handleLogin = () => {
-        // Vérification simplifiée
         if (email === 'test@example.com' && password === 'password123') {
-            onLogin(); // Passe l'utilisateur à "authentifié"
+            onLogin();
         } else {
             Alert.alert('Error', 'Invalid email or password');
             setEmail('');
@@ -22,7 +21,6 @@ export default function Login({ onLogin }) {
         <View style={styles.container}>
             <Image source={require('../images/logo.png')} style={styles.logo} />
             <Text style={styles.appName}>WalkThrough</Text>
-
             <TextInput
                 style={styles.input}
                 placeholder="eMail"
@@ -34,16 +32,13 @@ export default function Login({ onLogin }) {
                 style={styles.input}
                 placeholder="Password"
                 placeholderTextColor="#2D2D2D"
-                secureTextEntry={true}
+                secureTextEntry
                 value={password}
                 onChangeText={setPassword}
             />
-
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                 <Text style={styles.loginText}>Login</Text>
             </TouchableOpacity>
-
-            <Text style={styles.link}>Reset your password</Text>
             <Text style={styles.link} onPress={() => navigation.navigate('CreateAccount')}>
                 Create account
             </Text>
@@ -61,14 +56,13 @@ const styles = StyleSheet.create({
     logo: {
         width: 150,
         height: 150,
-        marginTop: -50,
-        marginBottom: 0,
+        marginBottom: 10,
     },
     appName: {
         fontFamily: 'ZenDots',
         fontSize: 32,
         color: '#FFD941',
-        marginBottom: 100,
+        marginBottom: 30,
     },
     input: {
         backgroundColor: '#FFD941',
@@ -76,10 +70,6 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 10,
         marginBottom: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
     },
     loginButton: {
         backgroundColor: '#FFD941',
@@ -96,7 +86,7 @@ const styles = StyleSheet.create({
     },
     link: {
         color: '#FFD941',
+        fontSize: 14,
         marginTop: 10,
-        textDecorationLine: 'underline',
     },
 });

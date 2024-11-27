@@ -22,7 +22,6 @@ export default function App() {
             });
             setFontsLoaded(true);
         }
-
         loadFonts();
     }, []);
 
@@ -39,7 +38,7 @@ export default function App() {
             <NavigationContainer>
                 <Stack.Navigator screenOptions={{ headerShown: false }}>
                     {!isAuthenticated ? (
-                        // Auth Stack
+                        // Auth Flow
                         <>
                             <Stack.Screen name="Login">
                                 {(props) => (
@@ -52,18 +51,15 @@ export default function App() {
                             <Stack.Screen name="CreateAccount" component={CreateAccount} />
                         </>
                     ) : (
-                        // Main App Stack
+                        // Main App Flow
                         <Stack.Screen name="MainApp">
                             {(props) => (
                                 <BottomTabNavigator
                                     {...props}
-                                    onLogout={() => {
-                                        setIsAuthenticated(false); // Réinitialiser l'authentification
-                                    }}
+                                    onLogout={() => setIsAuthenticated(false)}
                                 />
                             )}
                         </Stack.Screen>
-
                     )}
                 </Stack.Navigator>
             </NavigationContainer>

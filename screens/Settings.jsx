@@ -10,7 +10,6 @@ export default function Settings({ onLogout }) {
         <View style={[styles.container, { backgroundColor: themes[theme].backgroundColor }]}>
             <Header username="Camille22" />
             <Button title="Switch Theme" onPress={toggleTheme} />
-
             <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
                 <Text style={styles.logoutText}>Log out</Text>
             </TouchableOpacity>
