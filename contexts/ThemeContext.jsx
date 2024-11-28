@@ -5,17 +5,21 @@ export const ThemeContext = createContext();
 
 // Composant Provider pour fournir le contexte
 export default function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState('light');
+    const [theme, setTheme] = useState('dark');
 
     // Thème clair et sombre
     const themes = {
         light: {
             backgroundColor: '#FFFFFF',
-            textColor: '#000000',
+            textColor: '#232323',
+            cardColor: '#E9E9E9', // Couleur spécifique pour les rectangles en thème clair
+            activeColor: '#232323',
         },
         dark: {
-            backgroundColor: '#2D2D2D',
-            textColor: '#FFFFFF',
+            backgroundColor: '#232323',
+            textColor: '#FFD941',
+            cardColor: '#2D2D2D', // Couleur spécifique pour les rectangles en thème sombre
+            activeColor: '#FFFFFF',
         },
     };
 
