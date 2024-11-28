@@ -8,7 +8,7 @@ export default function Login({ onLogin }) {
     const navigation = useNavigation();
 
     const handleLogin = () => {
-        if (email === 'test@example.com' && password === 'password123') {
+        if (email === 'camille22@example.com' && password === 'Camille') {
             onLogin();
         } else {
             Alert.alert('Error', 'Invalid email or password');

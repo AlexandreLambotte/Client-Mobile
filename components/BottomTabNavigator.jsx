@@ -11,9 +11,9 @@ export default function BottomTabNavigator({ onLogout }) {
     return (
         <Tab.Navigator
             screenOptions={{
-                tabBarStyle: { backgroundColor: '#FFD941' },
-                tabBarActiveTintColor: '#2D2D2D',
-                tabBarInactiveTintColor: '#2D2D2D',
+                tabBarStyle: { backgroundColor: '#232323' },
+                tabBarActiveTintColor: '#FFF',
+                tabBarInactiveTintColor: '#FFD941',
                 headerShown: false,
             }}
         >

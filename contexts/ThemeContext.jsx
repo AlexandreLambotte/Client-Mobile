@@ -11,10 +11,10 @@ export default function ThemeProvider({ children }) {
     const themes = {
         light: {
             backgroundColor: '#FFFFFF',
-            textColor: '#000000',
+            textColor: '#232323',
         },
         dark: {
-            backgroundColor: '#2D2D2D',
+            backgroundColor: '#232323',
             textColor: '#FFFFFF',
         },
     };
