@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext'; // Importer le contexte du thème
 
-export default function Profile() {
+export default function Profile({ navigation }) {
     const userName = "Camille22";
     const steps = 666;
     const goal = "Goal 8000/Day";
@@ -25,7 +25,7 @@ export default function Profile() {
                     style={styles.coverImage} 
                 />
                 <LinearGradient
-                    colors={['rgba(35, 35, 35, 0)', currentTheme.backgroundColor]}
+                    colors={[currentTheme.gradientColor, currentTheme.backgroundColor]}
                     style={styles.gradient}
                 />
                 <View style={styles.profileInfo}>
@@ -65,13 +65,16 @@ export default function Profile() {
             </View>
 
             {/* Grand rectangle en bas */}
-            <View style={styles.bottomSection}>
-                <MaterialIcons name="emoji-events" size={50} />
+            <TouchableOpacity 
+                style={[styles.bottomSection, { backgroundColor: '#FFD941' }]}
+                onPress={() => navigation.navigate('Leaderboard')} // Naviguer vers l'écran Leaderboard
+            >
+                <MaterialIcons name="emoji-events" size={50} color="#232323" />
                 <Text style={styles.goldTitle}>Gold</Text>
                 <Text style={styles.goldSubtitle}>
                     Une activité de folie !
                 </Text>
-            </View>
+            </TouchableOpacity>
         </View>
     );
 }
@@ -149,7 +152,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
     },
     bottomSection: {
-        backgroundColor: '#FFD941',
         marginHorizontal: 20,
         height: 186,
         borderRadius: 25,

@@ -11,12 +11,14 @@ export default function ThemeProvider({ children }) {
     const themes = {
         light: {
             backgroundColor: '#FFFFFF',
+            gradientColor: 'rgba(255, 255, 255, 0)',
             textColor: '#232323',
             cardColor: '#E9E9E9', // Couleur spécifique pour les rectangles en thème clair
             activeColor: '#232323',
         },
         dark: {
             backgroundColor: '#232323',
+            gradientColor: 'rgba(35, 35, 35, 0)',
             textColor: '#FFD941',
             cardColor: '#2D2D2D', // Couleur spécifique pour les rectangles en thème sombre
             activeColor: '#FFFFFF',

@@ -8,6 +8,7 @@ import ThemeProvider from './contexts/ThemeContext';
 import Login from './screens/Login';
 import CreateAccount from './screens/CreateAccount';
 import BottomTabNavigator from './components/BottomTabNavigator';
+import Leaderboard from './screens/Leaderboard'; // Import Leaderboard
 
 const Stack = createNativeStackNavigator();
 
@@ -52,14 +53,17 @@ export default function App() {
                         </>
                     ) : (
                         // Main App Flow
-                        <Stack.Screen name="MainApp">
-                            {(props) => (
-                                <BottomTabNavigator
-                                    {...props}
-                                    onLogout={() => setIsAuthenticated(false)}
-                                />
-                            )}
-                        </Stack.Screen>
+                        <>
+                            <Stack.Screen name="MainApp">
+                                {(props) => (
+                                    <BottomTabNavigator
+                                        {...props}
+                                        onLogout={() => setIsAuthenticated(false)}
+                                    />
+                                )}
+                            </Stack.Screen>
+                            <Stack.Screen name="Leaderboard" component={Leaderboard} />
+                        </>
                     )}
                 </Stack.Navigator>
             </NavigationContainer>
