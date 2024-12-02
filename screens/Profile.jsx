@@ -30,7 +30,7 @@ export default function Profile({ navigation }) {
                 />
                 <View style={styles.profileInfo}>
                     <Image
-                        source={require('../images/stable-diffusion-xl(21).jpg')} // Remplacer par la vraie photo de profil
+                        source={require('../images/stable-diffusion-xl(21).jpg')}
                         style={[styles.profileImage, { borderColor: '#FFD941' }]}
                     />
                     <Text style={[styles.userName, { color: currentTheme.textColor }]}>
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
     },
     bottomSection: {
-        marginHorizontal: 20,
+        marginHorizontal: 35,
         height: 186,
         borderRadius: 25,
         alignItems: 'center',
