@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Font from 'expo-font';
 
 import ThemeProvider from './contexts/ThemeContext';
+import { UserProvider } from './contexts/UserContext';
 import Login from './screens/Login';
 import CreateAccount from './screens/CreateAccount';
 import BottomTabNavigator from './components/BottomTabNavigator';
@@ -35,38 +36,40 @@ export default function App() {
     }
 
     return (
-        <ThemeProvider>
-            <NavigationContainer>
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
-                    {!isAuthenticated ? (
-                        // Auth Flow
-                        <>
-                            <Stack.Screen name="Login">
-                                {(props) => (
-                                    <Login
-                                        {...props}
-                                        onLogin={() => setIsAuthenticated(true)}
-                                    />
-                                )}
-                            </Stack.Screen>
-                            <Stack.Screen name="CreateAccount" component={CreateAccount} />
-                        </>
-                    ) : (
-                        // Main App Flow
-                        <>
-                            <Stack.Screen name="MainApp">
-                                {(props) => (
-                                    <BottomTabNavigator
-                                        {...props}
-                                        onLogout={() => setIsAuthenticated(false)}
-                                    />
-                                )}
-                            </Stack.Screen>
-                            <Stack.Screen name="Leaderboard" component={Leaderboard} />
-                        </>
-                    )}
-                </Stack.Navigator>
-            </NavigationContainer>
-        </ThemeProvider>
+        <UserProvider>
+            <ThemeProvider>
+                <NavigationContainer>
+                    <Stack.Navigator screenOptions={{ headerShown: false }}>
+                        {!isAuthenticated ? (
+                            // Auth Flow
+                            <>
+                                <Stack.Screen name="Login">
+                                    {(props) => (
+                                        <Login
+                                            {...props}
+                                            onLogin={() => setIsAuthenticated(true)}
+                                        />
+                                    )}
+                                </Stack.Screen>
+                                <Stack.Screen name="CreateAccount" component={CreateAccount} />
+                            </>
+                        ) : (
+                            // Main App Flow
+                            <>
+                                <Stack.Screen name="MainApp">
+                                    {(props) => (
+                                        <BottomTabNavigator
+                                            {...props}
+                                            onLogout={() => setIsAuthenticated(false)}
+                                        />
+                                    )}
+                                </Stack.Screen>
+                                <Stack.Screen name="Leaderboard" component={Leaderboard} />
+                            </>
+                        )}
+                    </Stack.Navigator>
+                </NavigationContainer>
+            </ThemeProvider>
+        </UserProvider>
     );
 }
