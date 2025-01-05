@@ -1,4 +1,4 @@
-Lien pour telecharger l'API :
+Lien pour télécharger l'API :
 
 https://henallux-my.sharepoint.com/:u:/g/personal/etu52875_henallux_be/EaAG3NPC43RLq2PhAkevCyoB314ZA6mLLzzYrkb7anEEMQ?e=aA497Z
 
