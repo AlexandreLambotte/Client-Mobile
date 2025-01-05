@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
-import Header from '../components/Header';
 import { Ionicons } from '@expo/vector-icons'; // Import des icônes
 
 export default function Settings({ onLogout }) {
@@ -9,7 +8,6 @@ export default function Settings({ onLogout }) {
 
     return (
         <View style={[styles.container, { backgroundColor: themes[theme].backgroundColor }]}>
-            <Header username="Camille22" />
 
             {/* Icône pour changer le thème */}
             <TouchableOpacity onPress={toggleTheme} style={styles.iconContainer}>

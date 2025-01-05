@@ -1,56 +1,69 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';
-import { MaterialIcons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { useUser } from '../contexts/UserContext'; // Utilisation de useUser pour récupérer le token
+import { useTheme } from '../contexts/ThemeContext'; // Utilisation du thème via ThemeContext
 
-export default function Leaderboard({ navigation }) {
-    const { theme, themes } = useTheme();
-    const currentTheme = themes[theme];
+export default function Leaderboard() {
+    const [leaderboardData, setLeaderboardData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { user } = useUser(); // Récupération des informations utilisateur
+    const { theme, themes } = useTheme(); // Récupération du thème actuel et des styles associés
 
-    // Exemple de données pour le leaderboard
-    const leaderboardData = Array.from({ length: 30 }, (_, i) => ({
-        id: i + 1,
-        username: `User${i + 1}`,
-        steps: Math.floor(Math.random() * 20000 + 5000), // Entre 5000 et 25000 pas
-    }));
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            if (!user?.token) {
+                Alert.alert('Erreur', 'Vous devez être connecté pour accéder au leaderboard.');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetch('http://192.168.0.44:3001/stepslog/leaderboard', {
+                    headers: {
+                        'Authorization': `Bearer ${user.token}`, // Envoie du token JWT
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setLeaderboardData(data);
+                } else {
+                    const errorMessage = `Impossible de récupérer les données. Code: ${response.status}`;
+                    console.error(errorMessage);
+                    Alert.alert('Erreur', errorMessage);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données:', error.message);
+                Alert.alert('Erreur', 'Une erreur est survenue. Vérifiez votre connexion.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchLeaderboard();
+    }, [user?.token]);
+
+    const renderItem = ({ item, index }) => (
+        <View style={[styles.row, { backgroundColor: themes[theme].cardColor }]}>
+            <Text style={[styles.text, { color: themes[theme].textColor, flex: 1 }]}>{index + 1}</Text>
+            <Text style={[styles.text, { color: themes[theme].textColor, flex: 2 }]}>ID: {item.user_id}</Text>
+            <Text style={[styles.text, { color: themes[theme].textColor, flex: 2 }]}>{item.total_distance} pas</Text>
+        </View>
+    );
 
     return (
-        <View style={[styles.container, { backgroundColor: currentTheme.backgroundColor }]}>
-            {/* Header avec flèche de retour */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <MaterialIcons name="arrow-back" size={24} color={currentTheme.textColor} />
-                </TouchableOpacity>
-                <Text style={[styles.title, { color: currentTheme.textColor }]}>Leaderboard</Text>
-            </View>
-
-            {/* Liste scrollable */}
-            <FlatList
-                data={leaderboardData}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item, index }) => (
-                    <View
-                        style={[
-                            styles.row,
-                            {
-                                backgroundColor: index % 2 === 0
-                                    ? currentTheme.cardColor
-                                    : currentTheme.backgroundColor,
-                            },
-                        ]}
-                    >
-                        <Text style={[styles.rank, { color: currentTheme.textColor }]}>
-                            #{item.id}
-                        </Text>
-                        <Text style={[styles.username, { color: currentTheme.textColor }]}>
-                            {item.username}
-                        </Text>
-                        <Text style={[styles.steps, { color: currentTheme.textColor }]}>
-                            {item.steps} steps
-                        </Text>
-                    </View>
-                )}
-            />
+        <View style={[styles.container, { backgroundColor: themes[theme].backgroundColor }]}>
+            <Text style={[styles.title, { color: themes[theme].textColor }]}>Classement</Text>
+            {loading ? (
+                <ActivityIndicator size="large" color={themes[theme].textColor} />
+            ) : (
+                <FlatList
+                    data={leaderboardData}
+                    renderItem={renderItem}
+                    keyExtractor={(item, index) => index.toString()}
+                />
+            )}
         </View>
     );
 }
@@ -58,35 +71,23 @@ export default function Leaderboard({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingTop: 40,
-        padding: 16,
+        padding: 20,
     },
     title: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
-        marginLeft: 16,
+        textAlign: 'center',
+        marginBottom: 20,
     },
     row: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        marginBottom: 10,
+        borderRadius: 5,
     },
-    rank: {
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    username: {
-        fontSize: 16,
-        flex: 1,
-        marginLeft: 16,
-    },
-    steps: {
+    text: {
         fontSize: 16,
         fontWeight: 'bold',
     },
