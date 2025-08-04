@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { useUser } from '../contexts/UserContext'; // Utilisation de useUser pour récupérer le token
 import { useTheme } from '../contexts/ThemeContext'; // Utilisation du thème via ThemeContext
+import { useSelector } from 'react-redux';
 
 export default function Leaderboard() {
     const [leaderboardData, setLeaderboardData] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { user } = useUser(); // Récupération des informations utilisateur
+    const { user, token } = useSelector((state) => state.auth);
     const { theme, themes } = useTheme(); // Récupération du thème actuel et des styles associés
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
-            if (!user?.token) {
+            if (!token) {
                 Alert.alert('Erreur', 'Vous devez être connecté pour accéder au leaderboard.');
                 setLoading(false);
                 return;
             }
 
             try {
-                const response = await fetch('http://192.168.0.44:3001/stepslog/leaderboard', {
+                const response = await fetch('http://192.168.0.44:3001/stepslog/leaderboard?limit=10&skip=0', {
                     headers: {
-                        'Authorization': `Bearer ${user.token}`, // Envoie du token JWT
+                        'Authorization': `Bearer ${token}`, // Envoi du token JWT
                         'Content-Type': 'application/json',
                     },
                 });

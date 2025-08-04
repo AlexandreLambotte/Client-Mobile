@@ -1,55 +1,53 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useTheme } from '../contexts/ThemeContext';
-import { Ionicons } from '@expo/vector-icons'; // Import des icônes
+import { useDispatch } from 'react-redux';
+import { logout } from '../redux/slices/authSlice'; // ✅ Corrigé ici
+import { useTheme } from '../contexts/ThemeContext'; // ✅ Pour le changement de thème
 
-export default function Settings({ onLogout }) {
-    const { theme, themes, toggleTheme } = useTheme();
+export default function Settings() {
+  const dispatch = useDispatch();
+  const { theme, toggleTheme, themes } = useTheme(); // ✅ Accès au thème et switch
+  const currentTheme = themes[theme];
 
-    return (
-        <View style={[styles.container, { backgroundColor: themes[theme].backgroundColor }]}>
+  const handleLogout = () => {
+    dispatch(logout());
+  };
 
-            {/* Icône pour changer le thème */}
-            <TouchableOpacity onPress={toggleTheme} style={styles.iconContainer}>
-                {theme === 'light' ? (
-                    <Ionicons name="sunny" size={40} color="#FFD941" />
-                ) : (
-                    <Ionicons name="moon" size={40} color="#FFD941" />
-                )}
-            </TouchableOpacity>
+  return (
+    <View style={[styles.container, { backgroundColor: currentTheme.backgroundColor }]}>
+      <Text style={[styles.title, { color: currentTheme.textColor }]}>Paramètres</Text>
 
-            {/* Bouton de déconnexion */}
-            <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
-                <Text style={styles.logoutText}>Log out</Text>
-            </TouchableOpacity>
-        </View>
-    );
+      <TouchableOpacity style={[styles.button, { backgroundColor: currentTheme.cardColor }]} onPress={toggleTheme}>
+        <Text style={[styles.buttonText, { color: currentTheme.textColor }]}>
+          Passer en mode {theme === 'light' ? 'sombre' : 'clair'}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={[styles.button, { backgroundColor: '#FFD941', marginTop: 20 }]} onPress={handleLogout}>
+        <Text style={[styles.buttonText, { color: '#2D2D2D' }]}>Déconnexion</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: 70,
-    },
-    iconContainer: {
-        marginVertical: 20,
-        padding: 10,
-        borderRadius: 50,
-        backgroundColor: '#444', // Fond léger pour l'icône
-    },
-    logoutButton: {
-        marginTop: 20,
-        padding: 10,
-        borderRadius: 5,
-        backgroundColor: '#FFD941',
-        width: '50%',
-        alignItems: 'center',
-    },
-    logoutText: {
-        color: '#2D2D2D',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 30,
+    fontWeight: 'bold',
+  },
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

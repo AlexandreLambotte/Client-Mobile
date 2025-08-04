@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../redux/slices/userSlice';
+import { API_URL } from '@env';
 
 export default function CreateAccount() {
     const navigation = useNavigation();
+    const dispatch = useDispatch();
 
-    // États pour les champs de saisie
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [loading, setLoading] = useState(false); // Indicateur de chargement
+    const [loading, setLoading] = useState(false);
 
-    // Fonction de création de compte
     const handleCreateAccount = async () => {
-        // Validation des champs
         if (!username || !email || !password || !confirmPassword) {
             Alert.alert("Erreur", "Tous les champs sont requis !");
             return;
@@ -25,11 +26,9 @@ export default function CreateAccount() {
             return;
         }
 
-        // Indique l'état de chargement
         setLoading(true);
 
         try {
-            // Appel à l'API
             const response = await fetch('http://192.168.0.44:3001/user/registration', {
                 method: 'POST',
                 headers: {
@@ -39,25 +38,23 @@ export default function CreateAccount() {
                     username,
                     email,
                     password,
-                    is_admin: false, // Défini par défaut à false
-                    rank_id: 1, // Rank par défaut
+                    is_admin: false,
+                    rank_id: 1,
                 }),
             });
 
-            const result = await response.text(); // Réponse de l'API
-            console.log(result);
             if (response.ok) {
-                // Si l'API retourne uniquement l'ID, afficher un message de succès
-                Alert.alert("Succès", `Compte créé avec succès !`);
+                Alert.alert("Succès", "Compte créé avec succès !");
                 navigation.navigate('Login');
             } else {
-                Alert.alert("Erreur", result);
+                const errorText = await response.text();
+                Alert.alert("Erreur", errorText);
             }
         } catch (error) {
             console.error('Erreur lors de la création du compte:', error);
             Alert.alert("Erreur", "Impossible de se connecter au serveur. Veuillez réessayer.");
         } finally {
-            setLoading(false); // Fin de l'état de chargement
+            setLoading(false);
         }
     };
 
@@ -67,10 +64,8 @@ export default function CreateAccount() {
                 <Image source={require('../images/logo.png')} style={styles.logo} />
             </TouchableOpacity>
             <Text style={styles.appName}>WalkThrough</Text>
-
             <Text style={styles.title}>Créer un compte</Text>
 
-            {/* Champ Username */}
             <TextInput
                 style={styles.input}
                 placeholder="Nom d'utilisateur"
@@ -79,7 +74,6 @@ export default function CreateAccount() {
                 onChangeText={setUsername}
             />
 
-            {/* Champ Email */}
             <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -90,7 +84,6 @@ export default function CreateAccount() {
                 onChangeText={setEmail}
             />
 
-            {/* Champ Mot de passe */}
             <TextInput
                 style={styles.input}
                 placeholder="Mot de passe"
@@ -100,7 +93,6 @@ export default function CreateAccount() {
                 onChangeText={setPassword}
             />
 
-            {/* Champ Confirmation du mot de passe */}
             <TextInput
                 style={styles.input}
                 placeholder="Confirmer le mot de passe"
@@ -110,7 +102,6 @@ export default function CreateAccount() {
                 onChangeText={setConfirmPassword}
             />
 
-            {/* Bouton Créer un compte */}
             <TouchableOpacity style={styles.button} onPress={handleCreateAccount} disabled={loading}>
                 {loading ? (
                     <ActivityIndicator size="small" color="#2D2D2D" />
@@ -119,7 +110,6 @@ export default function CreateAccount() {
                 )}
             </TouchableOpacity>
 
-            {/* Redirection vers Login */}
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={styles.link}>Déjà un compte ? Se connecter</Text>
             </TouchableOpacity>

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useUser } from '../contexts/UserContext';  // Importer le UserContext
+import { useDispatch } from 'react-redux';
+import { login } from '../redux/slices/authSlice';
+// import { API_URL } from '@env'; // Désactivé si non fonctionnel
 
-export default function Login({ onLogin }) {
-    const { setUser } = useUser();  // Utiliser setUser du contexte
+export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const navigation = useNavigation();
+    const dispatch = useDispatch();
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -16,23 +18,21 @@ export default function Login({ onLogin }) {
             return;
         }
 
-        setLoading(true); // Montre un indicateur de chargement
+        setLoading(true);
         try {
-            const response = await fetch('http://192.168.0.44:3001/user/login', { // Remplacez par l'IP locale de votre API
+            const response = await fetch('http://192.168.0.44:3001/user/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
 
             if (response.ok) {
-                const { token, user } = await response.json(); // Token et infos utilisateur
+                const data = await response.json();
+                console.log("Réponse API OK", data);
 
-                // Mettre à jour les données de l'utilisateur dans le contexte
-                setUser({ token, user });
+                dispatch(login({ token: data.token, user: data.user }));
 
-                // Appeler le callback onLogin avec les infos utilisateur et token
-                onLogin({ token, user });
-
+                console.log("Redirection vers MainApp...");
             } else {
                 const errorMessage = response.status === 404 
                     ? 'Invalid email or password.' 
@@ -43,7 +43,7 @@ export default function Login({ onLogin }) {
             console.error('Login Error:', error);
             Alert.alert('Error', 'Unable to connect to the server. Please try again.');
         } finally {
-            setLoading(false); // Arrête l'indicateur de chargement
+            setLoading(false);
         }
     };
 

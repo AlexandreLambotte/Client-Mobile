@@ -3,10 +3,10 @@ import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'rea
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext'; // Importer le contexte du thème
-import { useUser } from '../contexts/UserContext'; // Importer le UserContext
+import { useSelector } from 'react-redux';
 
 export default function Profile({ navigation }) {
-    const { user } = useUser();  // Accéder aux données utilisateur du contexte
+    const  user = useSelector((state) => state.auth.user);
     const steps = 666;
     const goal = "Goal 8000/Day";
     const avgSteps = "Last 7 days";
@@ -34,7 +34,7 @@ export default function Profile({ navigation }) {
                         style={[styles.profileImage, { borderColor: '#FFD941' }]}
                     />
                     <Text style={[styles.userName, { color: currentTheme.textColor }]}>
-                        {user.user.username} 
+                        {user.username} 
                     </Text>
                 </View>
             </View>
