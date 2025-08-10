@@ -8,12 +8,12 @@ export default function SimpleRoute({ origin, destination, onRouteCalculated }) 
   useEffect(() => {
     if (!origin || !destination) return;
 
-    const selectedPOIData = landmarks.filter(lm => selectedPOIs.includes(lm.id));
+    const selectedPOIData = landmarks.filter((lm) => selectedPOIs.includes(lm.id));
 
     const fetchRoute = async () => {
       const coordinates = [
         [origin.longitude, origin.latitude],
-        ...selectedPOIData.map(poi => [parseFloat(poi.longitude), parseFloat(poi.latitude)]),
+        ...selectedPOIData.map((poi) => [parseFloat(poi.longitude), parseFloat(poi.latitude)]),
         [destination.longitude, destination.latitude],
       ];
 
@@ -23,7 +23,8 @@ export default function SimpleRoute({ origin, destination, onRouteCalculated }) 
           {
             method: 'POST',
             headers: {
-              'Authorization': 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA0ZmE5YWY5N2M4NjQwNjU5ODFiNWM1OWEzNjczMzY2IiwiaCI6Im11cm11cjY0In0=',
+              Authorization:
+                'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA0ZmE5YWY5N2M4NjQwNjU5ODFiNWM1OWEzNjczMzY2IiwiaCI6Im11cm11cjY0In0=',
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ coordinates }),
@@ -31,13 +32,12 @@ export default function SimpleRoute({ origin, destination, onRouteCalculated }) 
         );
 
         const data = await response.json();
-        console.log(data);
         if (!data || !data.features || data.features.length === 0) {
-          console.error("Aucune route trouvée.");
+          console.error('Aucune route trouvée.');
           return;
         }
 
-        const coords = data.features[0].geometry.coordinates.map(coord => ({
+        const coords = data.features[0].geometry.coordinates.map((coord) => ({
           latitude: coord[1],
           longitude: coord[0],
         }));
@@ -48,7 +48,7 @@ export default function SimpleRoute({ origin, destination, onRouteCalculated }) 
           onRouteCalculated(coords, distance, duration);
         }
       } catch (err) {
-        console.error("Erreur OpenRouteService:", err);
+        console.error('Erreur OpenRouteService:', err);
       }
     };
 

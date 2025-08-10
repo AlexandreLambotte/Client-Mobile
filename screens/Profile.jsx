@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 
 const API_BASE = 'http://192.168.0.44:3001';
 const AVATAR_DIR = 'avatar';
@@ -24,88 +25,93 @@ const getAvatarSource = (user) => {
   return { uri: `${API_BASE}/image/${AVATAR_DIR}/${avatar}?t=${Date.now()}` };
 };
 
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
 export default function Profile({ navigation }) {
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
 
   const [rankTitle, setRankTitle] = useState('');
   const [avgStepsValue, setAvgStepsValue] = useState(null); // moyenne côté API
-
-  const steps = 666; // (placeholder) steps “du jour” si tu veux, à brancher sur ton API plus tard
-  const goal = 'Goal 8000/Day';
-  const avgStepsLabel = 'Last 7 days';
+  const [todaySteps, setTodaySteps] = useState(null);        // pas du jour
 
   const { width } = Dimensions.get('window');
   const { theme, themes } = useTheme();
   const currentTheme = themes[theme];
 
-  // Récupère le rang
-  useEffect(() => {
-    let isMounted = true;
-    const fetchRank = async () => {
-      try {
-        if (!user?.rank_id) {
-          if (isMounted) setRankTitle('');
-          return;
-        }
-        const res = await fetch(`${API_BASE}/rank/${user.rank_id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!res.ok) {
-          if (isMounted) setRankTitle('');
-          return;
-        }
-        const data = await res.json(); // attendu: { id, title }
-        if (isMounted) setRankTitle(data?.title || '');
-      } catch {
-        if (isMounted) setRankTitle('');
-      }
-    };
-    fetchRank();
-    return () => { isMounted = false; };
+  // --- helpers de fetch ---
+  const fetchRank = useCallback(async () => {
+    if (!user?.rank_id) { setRankTitle(''); return; }
+    try {
+      const res = await fetch(`${API_BASE}/rank/${user.rank_id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) { setRankTitle(''); return; }
+      const data = await res.json();
+      setRankTitle(data?.title || '');
+    } catch { setRankTitle(''); }
   }, [user?.rank_id, token]);
 
-  // Récupère la moyenne de pas
-  useEffect(() => {
-    let isMounted = true;
-    const fetchAverageSteps = async () => {
-      try {
-        if (!user?.id) {
-          if (isMounted) setAvgStepsValue(null);
-          return;
-        }
-        const res = await fetch(`${API_BASE}/stepslog/average/${user.id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!res.ok) {
-          if (isMounted) setAvgStepsValue(null);
-          return;
-        }
-        // L’API peut renvoyer un nombre brut OU un objet { average } / { avg }
-        let data;
-        try {
-          data = await res.json();
-        } catch {
-          // si ce n'est pas du JSON, on essaie en texte puis Number()
-          const txt = await res.text();
-          data = Number(txt);
-        }
+  const fetchAverageSteps = useCallback(async () => {
+    if (!user?.id) { setAvgStepsValue(null); return; }
+    try {
+      const res = await fetch(`${API_BASE}/stepslog/average/${user.id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) { setAvgStepsValue(null); return; }
 
-        let value = null;
-        if (typeof data === 'number' && !Number.isNaN(data)) value = Math.round(data);
-        else if (data && typeof data === 'object') {
-          const cand = data.average_distance ?? data.avg ?? data.value;
-          if (cand != null) value = Math.round(Number(cand));
-        }
-
-        if (isMounted) setAvgStepsValue(value);
-      } catch {
-        if (isMounted) setAvgStepsValue(null);
+      let data;
+      try { data = await res.json(); }
+      catch {
+        const txt = await res.text();
+        data = Number(txt);
       }
-    };
-    fetchAverageSteps();
-    return () => { isMounted = false; };
+
+      let value = null;
+      if (typeof data === 'number' && !Number.isNaN(data)) value = Math.round(data);
+      else if (data && typeof data === 'object') {
+        const cand = data.average_distance ?? data.avg ?? data.value;
+        if (cand != null) value = Math.round(Number(cand));
+      }
+      setAvgStepsValue(value);
+    } catch { setAvgStepsValue(null); }
   }, [user?.id, token]);
+
+  const fetchTodaySteps = useCallback(async () => {
+    if (!user?.id) { setTodaySteps(null); return; }
+    try {
+      const res = await fetch(`${API_BASE}/stepslog/${user.id}?limit=1&skip=0`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) { setTodaySteps(null); return; }
+      const arr = await res.json();
+      if (!Array.isArray(arr) || arr.length === 0) { setTodaySteps(null); return; }
+      const last = arr[0];
+      if (last?.log_date?.slice(0, 10) === todayISO()) {
+        const n = Number(last.distance_walked);
+        setTodaySteps(Number.isFinite(n) ? n : null);
+      } else {
+        setTodaySteps(null);
+      }
+    } catch { setTodaySteps(null); }
+  }, [user?.id, token]);
+
+  // Montée initiale: on garde tes effets existants
+  useEffect(() => { fetchRank(); }, [fetchRank]);
+  useEffect(() => { fetchAverageSteps(); }, [fetchAverageSteps]);
+
+  // ✅ Rafraîchir au retour sur l’écran (rank + average + today)
+  useFocusEffect(
+    useCallback(() => {
+      fetchRank();
+      fetchAverageSteps();   // <-- mise à jour dynamique au focus
+      fetchTodaySteps();
+    }, [fetchRank, fetchAverageSteps, fetchTodaySteps])
+  );
+
+  const stepsLabel = 'Today';
+  const goal = 'Goal 8000/Day';
+  const avgStepsLabel = 'Last 7 days';
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.backgroundColor }]}>
@@ -136,10 +142,12 @@ export default function Profile({ navigation }) {
           <View style={[styles.cardTop, { backgroundColor: currentTheme.cardColor }]}>
             <MaterialIcons name="directions-walk" size={36} style={{ color: currentTheme.textColor }} />
             <Text style={[styles.cardTitle, { color: currentTheme.textColor }]}>Steps</Text>
-            <Text style={[styles.cardSubtitle, { color: currentTheme.textColor }]}>{goal}</Text>
+            <Text style={[styles.cardSubtitle, { color: currentTheme.textColor }]}>{stepsLabel}</Text>
           </View>
           <View style={styles.cardBottom}>
-            <Text style={styles.cardValue}>{steps}</Text>
+            <Text style={styles.cardValue}>
+              {todaySteps != null ? todaySteps : '—'}
+            </Text>
           </View>
         </View>
 

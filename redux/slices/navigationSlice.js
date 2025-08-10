@@ -1,74 +1,53 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+// redux/slices/navigationSlice.js
+import { createSlice } from '@reduxjs/toolkit';
 
-// ✅ Thunk pour récupérer les landmarks depuis l'API
-export const fetchLandmarksThunk = createAsyncThunk(
-  'navigation/fetchLandmarksThunk',
-  async (token, { rejectWithValue }) => {
-    try {
-      const res = await fetch('http://192.168.0.44:3001/landmark/all?limit=15&skip=0', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
-
-      const data = await res.json();
-      return data;
-    } catch (err) {
-      return rejectWithValue(err.message || 'Erreur inconnue');
-    }
-  }
-);
+const initialState = {
+  start: null,          // { latitude, longitude }
+  end: null,            // { latitude, longitude }
+  landmarks: [],        // tableau des POI proposés par /landmark/best
+  selectedPOIs: [],     // IDs sélectionnés (on en garde 0..1)
+};
 
 const navigationSlice = createSlice({
   name: 'navigation',
-  initialState: {
-    landmarks: [],
-    selectedPOIs: [],
-    loading: false,
-    error: null,
-  },
+  initialState,
   reducers: {
+    setStart: (state, action) => {
+      state.start = action.payload; // { latitude, longitude }
+    },
+    setEnd: (state, action) => {
+      state.end = action.payload;   // { latitude, longitude }
+    },
+    setLandmarks: (state, action) => {
+      // payload: [{ id, label, description, latitude, longitude, length_m, err_m }, ...]
+      state.landmarks = Array.isArray(action.payload) ? action.payload : [];
+      state.selectedPOIs = []; // on repart propre
+    },
     togglePOI: (state, action) => {
       const id = action.payload;
-      state.selectedPOIs = state.selectedPOIs.includes(id)
-        ? state.selectedPOIs.filter(p => p !== id)
-        : [...state.selectedPOIs, id];
+      if (state.selectedPOIs.includes(id)) {
+        state.selectedPOIs = state.selectedPOIs.filter(x => x !== id);
+      } else {
+        // si tu n'autorises qu’un seul POI à la fois
+        state.selectedPOIs = [id];
+      }
     },
     resetNavigation: (state) => {
       state.selectedPOIs = [];
+      // garde start/end/landmarks si besoin, sinon décommente:
+      // state.start = null;
+      // state.end = null;
+      // state.landmarks = [];
     },
-    setLandmarks: (state, action) => {
-      state.landmarks = action.payload;
-    },
-    clearLandmarks: (state) => {
-      state.landmarks = [];
-    },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchLandmarksThunk.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchLandmarksThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.landmarks = action.payload;
-      })
-      .addCase(fetchLandmarksThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
   },
 });
 
 export const {
+  setStart,
+  setEnd,
+  setLandmarks,
   togglePOI,
   resetNavigation,
-  setLandmarks,
-  clearLandmarks
 } = navigationSlice.actions;
 
 export default navigationSlice.reducer;

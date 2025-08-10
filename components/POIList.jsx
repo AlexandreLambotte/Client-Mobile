@@ -12,13 +12,14 @@ export default function POIList() {
 
   return (
     <View style={styles.poiList}>
-      <Text style={styles.poiTitle}>POI sélectionnés :</Text>
+      <Text style={styles.poiTitle}>POI sélectionné :</Text>
       {landmarks
         .filter((lm) => selectedPOIs.includes(lm.id))
         .map((lm) => (
           <TouchableOpacity key={lm.id} onPress={() => dispatch(togglePOI(lm.id))}>
             <Text style={styles.poiItem}>
-              • {lm.name} <Text style={styles.poiRemove}>[X]</Text>
+              • {lm.label || lm.name}{' '}
+              <Text style={styles.poiRemove}>[X]</Text>
             </Text>
           </TouchableOpacity>
         ))}
