@@ -1,199 +1,249 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Alert, TextInput } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Alert,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import SimpleRoute from '../components/SimpleRoute';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
-import { useSelector } from 'react-redux';
+import { geocodeInput, getUserLocation } from '../utils/geolocation';
+import POIList from '../components/POIList';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  fetchLandmarksThunk,
+  resetNavigation,
+  togglePOI,
+} from '../redux/slices/navigationSlice';
 
 export default function Map() {
   const [isRouteStarted, setIsRouteStarted] = useState(false);
-  const [landmarks, setLandmarks] = useState([]);
-  const [selectedPOIs, setSelectedPOIs] = useState([]);
-  const [destination, setDestination] = useState(null);
-  const [searchInput, setSearchInput] = useState('');
+  const [originInput, setOriginInput] = useState('');
+  const [destinationInput, setDestinationInput] = useState('');
+  const [originCoords, setOriginCoords] = useState(null);
+  const [destinationCoords, setDestinationCoords] = useState(null);
+  const [route, setRoute] = useState([]);
+  const [distance, setDistance] = useState(null);
+  const [duration, setDuration] = useState(null);
+
+  const dispatch = useDispatch();
   const { theme, themes } = useTheme();
   const currentTheme = themes[theme];
+
   const { token } = useSelector((state) => state.auth);
+  const landmarks = useSelector((state) => state.navigation.landmarks);
+  const selectedPOIs = useSelector((state) => state.navigation.selectedPOIs);
 
   useEffect(() => {
-    const fetchLandmarks = async () => {
-      try {
-        const response = await fetch('http://192.168.0.44:3001/landmark/all?limit=10&skip=0', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+    dispatch(fetchLandmarksThunk(token));
+  }, [dispatch, token]);
 
-        if (response.ok) {
-          const data = await response.json();
-          setLandmarks(data);
-        } else {
-          Alert.alert('Erreur', `Code: ${response.status}`);
-        }
-      } catch (error) {
-        Alert.alert('Erreur', 'Impossible de charger les points d’intérêt.');
-      }
+  useEffect(() => {
+    const loadUserLocation = async () => {
+      const location = await getUserLocation();
+      if (location) setOriginCoords(location);
     };
 
-    fetchLandmarks();
+    loadUserLocation();
   }, []);
 
-  const handleStartRoute = () => {
+  const handleStartRoute = async () => {
+    const origin = await geocodeInput(originInput, true);
+    const destination = await geocodeInput(destinationInput, false);
+
     if (!destination) {
-      Alert.alert("Erreur", "Veuillez d'abord entrer une destination.");
+      Alert.alert('Erreur', 'Veuillez entrer une destination valide.');
       return;
     }
+
+    setOriginCoords(origin);
+    setDestinationCoords(destination);
+    setRoute([]);
+    setDistance(null);
+    setDuration(null);
     setIsRouteStarted(true);
   };
 
   const handleStopRoute = () => {
     setIsRouteStarted(false);
-    setDestination(null);
-    setSearchInput('');
+    setOriginInput('');
+    setDestinationInput('');
+    setOriginCoords(null);
+    setDestinationCoords(null);
+    dispatch(resetNavigation());
+    setRoute([]);
+    setDistance(null);
+    setDuration(null);
   };
 
-  const togglePOI = (poiId) => {
-    setSelectedPOIs((prev) =>
-      prev.includes(poiId)
-        ? prev.filter((id) => id !== poiId)
-        : [...prev, poiId]
-    );
+  const onRouteCalculated = (coords, dist, dur) => {
+    setRoute(coords);
+    setDistance(dist);
+    setDuration(dur);
   };
 
-  const handleGeocode = async () => {
-    if (!searchInput.trim()) {
-      Alert.alert("Erreur", "Entrez une adresse ou des coordonnées.");
-      return;
-    }
-
-    let query = encodeURIComponent(searchInput);
-    const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json`;
-
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'WalkThroughApp/1.0 (email@example.com)' // Obligatoire pour Nominatim
-        }
-      });
-      const data = await res.json();
-
-      if (data.length > 0) {
-        const { lat, lon } = data[0];
-        setDestination({
-          latitude: parseFloat(lat),
-          longitude: parseFloat(lon),
-        });
-      } else {
-        Alert.alert("Erreur", "Aucune correspondance trouvée.");
-      }
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Erreur", "Échec de la géolocalisation.");
-    }
-  };
+  const estimatedSteps = distance ? Math.round(distance / 0.75) : null;
 
   return (
-    <View style={[styles.container, { backgroundColor: currentTheme.backgroundColor }]}>
-      {!isRouteStarted ? (
-        <View style={styles.centeredContainer}>
-          <Text style={[styles.title, { color: currentTheme.textColor }]}>
-            Entrez une destination ou appuyez sur un POI
-          </Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: '#fff' }]}
-            placeholder="Ex : Rue de Namur 32, Bruxelles"
-            value={searchInput}
-            onChangeText={setSearchInput}
-            placeholderTextColor="#999"
-          />
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: currentTheme.cardColor }]}
-            onPress={handleGeocode}
-          >
-            <Text style={{ color: currentTheme.activeColor, fontWeight: 'bold' }}>
-              Chercher la destination
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: currentTheme.cardColor, marginTop: 10 }]}
-            onPress={handleStartRoute}
-          >
-            <Text style={{ color: currentTheme.activeColor, fontWeight: 'bold' }}>
-              Commencer le trajet
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
           <MapView
-            style={{ flex: 1 }}
-            initialRegion={{
-              latitude: destination?.latitude || 50.4667,
-              longitude: destination?.longitude || 4.867,
-              latitudeDelta: 0.1,
-              longitudeDelta: 0.1,
-            }}
+            style={styles.map}
+            showsUserLocation={true}
+            region={
+              originCoords
+                ? {
+                    latitude: originCoords.latitude,
+                    longitude: originCoords.longitude,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                  }
+                : {
+                    latitude: 50.4667,
+                    longitude: 4.867,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                  }
+            }
           >
-            {landmarks.map((lm) => (
-              <Marker
-                key={lm.id}
-                coordinate={{ latitude: lm.latitude, longitude: lm.longitude }}
-                title={lm.name}
-                description={lm.description}
-                pinColor={selectedPOIs.includes(lm.id) ? 'orange' : 'red'}
-                onPress={() => togglePOI(lm.id)}
-              />
-            ))}
-            {destination && (
-              <Marker
-                coordinate={destination}
-                title="Destination"
-                pinColor="blue"
-              />
+            {landmarks.map((lm) => {
+              const isSelected = selectedPOIs.includes(lm.id);
+              return (
+                <Marker
+                  key={lm.id}
+                  coordinate={{
+                    latitude: parseFloat(lm.latitude),
+                    longitude: parseFloat(lm.longitude),
+                  }}
+                  title={lm.name}
+                  description={lm.description}
+                  pinColor={isSelected ? '#ff9100ff' : '#d80404ff'}
+                  onPress={() => dispatch(togglePOI(lm.id))}
+                />
+              );
+            })}
+            {originCoords && (
+              <Marker coordinate={originCoords} title="Départ" pinColor="green" />
+            )}
+            {destinationCoords && (
+              <Marker coordinate={destinationCoords} title="Destination" pinColor="blue" />
+            )}
+            {route.length > 0 && (
+              <Polyline coordinates={route} strokeColor="#FFD941" strokeWidth={4} />
             )}
           </MapView>
-          <SimpleRoute selectedPOIs={selectedPOIs} destination={destination} />
-          <TouchableOpacity
-            style={[styles.settingsButton, { backgroundColor: currentTheme.cardColor }]}
-            onPress={handleStopRoute}
-          >
-            <Ionicons name="settings" size={24} color={currentTheme.textColor} />
-            <Text style={{ marginLeft: 8, color: currentTheme.textColor }}>
-              Arrêter le trajet
-            </Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
+
+          {/* ✅ POIList Redux (plus de props nécessaires) */}
+          <POIList />
+
+          {!isRouteStarted ? (
+            <View style={styles.controls}>
+              <Text style={[styles.title, { color: currentTheme.textColor }]}>
+                Définir votre trajet
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Point de départ (adresse ou lat,lon)"
+                value={originInput}
+                onChangeText={setOriginInput}
+                placeholderTextColor="#999"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Destination (adresse ou lat,lon)"
+                value={destinationInput}
+                onChangeText={setDestinationInput}
+                placeholderTextColor="#999"
+              />
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: currentTheme.cardColor }]}
+                onPress={handleStartRoute}
+              >
+                <Text style={{ color: currentTheme.activeColor, fontWeight: 'bold' }}>
+                  Commencer le trajet
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <SimpleRoute
+                origin={originCoords}
+                destination={destinationCoords}
+                selectedPOIs={landmarks.filter((lm) =>
+                  selectedPOIs.includes(lm.id)
+                )}
+                onRouteCalculated={onRouteCalculated}
+              />
+              <TouchableOpacity
+                style={[styles.settingsButton, { backgroundColor: currentTheme.cardColor }]}
+                onPress={handleStopRoute}
+              >
+                <Ionicons name="settings" size={24} color={currentTheme.textColor} />
+                <Text style={{ marginLeft: 8, color: currentTheme.textColor }}>
+                  Arrêter le trajet
+                </Text>
+              </TouchableOpacity>
+              {distance && duration && (
+                <View style={styles.infoBox}>
+                  <Text style={styles.infoText}>
+                    Distance : {(distance / 1000).toFixed(2)} km
+                  </Text>
+                  <Text style={styles.infoText}>
+                    Durée : {Math.ceil(duration / 60)} min
+                  </Text>
+                  <Text style={styles.infoText}>Pas estimés : {estimatedSteps}</Text>
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  centeredContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: 'center',
+  map: { flex: 1 },
+  controls: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
+    backgroundColor: '#ffffffee',
+    padding: 15,
+    borderRadius: 10,
+    elevation: 5,
   },
   input: {
-    width: '100%',
+    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
     marginBottom: 10,
+    color: '#000',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   button: {
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    width: '100%',
   },
   settingsButton: {
     position: 'absolute',
@@ -204,5 +254,45 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     elevation: 3,
+  },
+  infoBox: {
+    position: 'absolute',
+    bottom: 120,
+    left: 20,
+    right: 20,
+    backgroundColor: '#ffffffcc',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  infoText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2D2D2D',
+  },
+  poiList: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    backgroundColor: '#ffffffee',
+    padding: 10,
+    borderRadius: 10,
+    elevation: 3,
+  },
+  poiTitle: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginBottom: 5,
+    color: '#2D2D2D',
+  },
+  poiItem: {
+    fontSize: 13,
+    color: '#2D2D2D',
+    marginBottom: 4,
+  },
+  poiRemove: {
+    color: '#d80404ff',
+    fontWeight: 'bold',
   },
 });
