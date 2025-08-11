@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { logout } from '../redux/slices/authSlice';
 
 import Map from '../screens/Map';
-import RouteSetup from '../screens/RouteSetup'; // ✅ add this
+import RouteSetup from '../screens/RouteSetup';
 import Profile from '../screens/Profile';
 import Settings from '../screens/Settings';
 

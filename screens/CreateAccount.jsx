@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
-import { API_URL } from '@env';
+
+const API_BASE = process.env.API_BASE;
 
 export default function CreateAccount() {
     const navigation = useNavigation();
@@ -28,7 +29,7 @@ export default function CreateAccount() {
         setLoading(true);
 
         try {
-            const response = await fetch('http://192.168.0.44:3001/user/registration', {
+            const response = await fetch(`${API_BASE}/user/registration`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

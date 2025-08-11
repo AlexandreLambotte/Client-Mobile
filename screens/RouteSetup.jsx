@@ -6,7 +6,7 @@ import { setLandmarks, setStart, setEnd } from '../redux/slices/navigationSlice'
 import { geocodeInput } from '../utils/geolocation';
 import { useTheme } from '../contexts/ThemeContext';
 
-const API_BASE = 'http://192.168.0.44:3001';
+const API_BASE = process.env.API_BASE;
 
 export default function RouteSetup({ navigation }) {
   const [steps, setSteps] = useState('');

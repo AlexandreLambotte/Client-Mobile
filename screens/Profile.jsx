@@ -6,7 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 
-const API_BASE = 'http://192.168.0.44:3001';
+const API_BASE = process.env.API_BASE;
 const AVATAR_DIR = 'avatar';
 
 // Construit la source d'image à partir du champ `user.avatar`.

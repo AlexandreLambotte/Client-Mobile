@@ -1,3 +1,4 @@
+// SimpleRoute.jsx
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -27,33 +28,40 @@ export default function SimpleRoute({ origin, destination, onRouteCalculated }) 
                 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjA0ZmE5YWY5N2M4NjQwNjU5ODFiNWM1OWEzNjczMzY2IiwiaCI6Im11cm11cjY0In0=',
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ coordinates }),
+            body: JSON.stringify({
+              coordinates,
+              instructions: true,  // ✅ on veut les étapes + instructions
+              language: 'fr',      // ✅ en français
+              units: 'm',          // ✅ distances en mètres
+              elevation: false,
+            }),
           }
         );
 
         const data = await response.json();
-        if (!data || !data.features || data.features.length === 0) {
+        if (!data?.features?.length) {
           console.error('Aucune route trouvée.');
           return;
         }
 
-        const coords = data.features[0].geometry.coordinates.map((coord) => ({
-          latitude: coord[1],
-          longitude: coord[0],
+        const feat = data.features[0];
+        const coords = feat.geometry.coordinates.map(([lon, lat]) => ({
+          latitude: lat,
+          longitude: lon,
         }));
 
-        const { distance, duration } = data.features[0].properties.summary;
+        const summary = feat.properties?.summary || {};
+        const distance = summary.distance; // mètres
+        const duration = summary.duration; // secondes
 
-        if (onRouteCalculated) {
-          onRouteCalculated(coords, distance, duration);
-        }
+        onRouteCalculated?.(coords, distance, duration, data); // ✅ on renvoie aussi la réponse ORS complète
       } catch (err) {
         console.error('Erreur OpenRouteService:', err);
       }
     };
 
     fetchRoute();
-  }, [origin, destination, selectedPOIs, landmarks]);
+  }, [origin, destination, selectedPOIs, landmarks, onRouteCalculated]);
 
   return null;
 }

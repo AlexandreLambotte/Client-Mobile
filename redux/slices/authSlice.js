@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const API_BASE = 'http://192.168.0.44:3001';
+const API_BASE = process.env.API_BASE;
 
 const initialState = {
   token: null,

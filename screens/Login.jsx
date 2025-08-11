@@ -3,7 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, Acti
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { login } from '../redux/slices/authSlice';
-import { fetchUserById } from '../redux/slices/authSlice'; // ✅ on importe le thunk
+import { fetchUserById } from '../redux/slices/authSlice';
+
+const API_BASE = process.env.API_BASE;
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -20,7 +22,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.0.44:3001/user/login', {
+      const response = await fetch(`${API_BASE}/user/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

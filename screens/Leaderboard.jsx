@@ -3,6 +3,8 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert } from 'reac
 import { useTheme } from '../contexts/ThemeContext'; // Utilisation du thème via ThemeContext
 import { useSelector } from 'react-redux';
 
+const API_BASE = process.env.API_BASE;
+
 export default function Leaderboard() {
     const [leaderboardData, setLeaderboardData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ export default function Leaderboard() {
             }
 
             try {
-                const response = await fetch('http://192.168.0.44:3001/stepslog/leaderboard?limit=10&skip=0', {
+                const response = await fetch(`${API_BASE}/stepslog/leaderboard?limit=10&skip=0`, {
                     headers: {
                         'Authorization': `Bearer ${token}`, // Envoi du token JWT
                         'Content-Type': 'application/json',

@@ -67,4 +67,26 @@ export const getUserLocation = async () => {
     Alert.alert("Erreur", "Impossible de récupérer votre position.");
     return null;
   }
+
+  
+};
+
+export async function reverseGeocode(lat, lon) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+      { headers: { 'User-Agent': 'WalkThroughApp/1.0 (email@example.com)' } }
+    );
+    const data = await res.json();
+    const a = data.address || {};
+    return {
+      street: a.road || a.pedestrian || a.footway || '',
+      city: a.city || a.town || a.village || a.county || '',
+      number: Number(a.house_number) || 0,
+      postal_code: Number(a.postcode) || 0,
+      country: a.country || '',
+    };
+  } catch {
+    return { street: '', city: '', number: 0, postal_code: 0, country: '' };
+  }
 };
