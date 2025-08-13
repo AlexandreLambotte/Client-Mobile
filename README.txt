@@ -1,6 +1,6 @@
 Lien pour télécharger l'API :
 
-https://henallux-my.sharepoint.com/:u:/g/personal/etu52875_henallux_be/EaAG3NPC43RLq2PhAkevCyoB314ZA6mLLzzYrkb7anEEMQ?e=aA497Z
+https://henallux-my.sharepoint.com/:u:/g/personal/etu52875_henallux_be/Ecz4G_2t72FGjWmrx_i915AB4GjLGsqR-24-Kmx85pq1aA
 
 Installation de l'API
 
@@ -14,3 +14,4 @@ Enfin, exécuter à l'intérieur du répertoire la commande suivante pour initia
 npm run start-all
 
 l'API devrait normalement être disponible à http://localhost:3001
+
