@@ -108,7 +108,7 @@ export default function Profile({ navigation }) {
   );
 
   const stepsLabel = 'Today';
-  const goal = 'Goal 8000/Day';
+  const goal = 'Goal 10000/Day';
   const avgStepsLabel = 'Last 7 days';
 
   return (

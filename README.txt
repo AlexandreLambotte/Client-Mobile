@@ -1,6 +1,6 @@
 Lien pour télécharger l'API :
 
-https://henallux-my.sharepoint.com/:u:/g/personal/etu52875_henallux_be/EaAG3NPC43RLq2PhAkevCyoB314ZA6mLLzzYrkb7anEEMQ?e=aA497Z
+https://henallux-my.sharepoint.com/:u:/g/personal/etu52875_henallux_be/ETvBlmNrXapNkupKz8S2hBEBxoZbgSwcCanGtHmzvpQ0ig?e=gVxoTt
 
 Installation de l'API
 
@@ -14,3 +14,11 @@ Enfin, exécuter à l'intérieur du répertoire la commande suivante pour initia
 npm run start-all
 
 l'API devrait normalement être disponible à http://localhost:3001
+
+Pour le client-mobile :
+
+Modifier, si besoin, la variable d'environnement API_BASE avec votre IP locale et le port 3001
+
+npm run start -client
+
+Le tour est joué !
