@@ -74,7 +74,7 @@ export const getUserLocation = async () => {
 export async function reverseGeocode(lat, lon) {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&zoom=18&accept-language=fr`,
       { headers: { 'User-Agent': 'WalkThroughApp/1.0 (email@example.com)' } }
     );
     const data = await res.json();

@@ -1,8 +1,7 @@
-// components/map/LandmarkPreview.jsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-/** Fiche d’aperçu pour un POI: montre nom, desc, estimations et actions. */
+// Fiche d’aperçu pour un POI: montre nom, desc, estimations et actions.
 export default function LandmarkPreview({ poi, estimates, onConfirm, onConfirmAndStart, onClose }) {
   return (
     <View style={styles.card}>

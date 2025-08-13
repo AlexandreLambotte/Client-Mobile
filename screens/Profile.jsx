@@ -21,7 +21,6 @@ const getAvatarSource = (user) => {
   if (typeof avatar === 'string' && avatar.startsWith('upload/')) {
     return { uri: `${API_BASE}/${avatar}?t=${Date.now()}` };
   }
-  // Cas nominal: juste le nom de fichier (ex: "xxxx.jpeg")
   return { uri: `${API_BASE}/image/${AVATAR_DIR}/${avatar}?t=${Date.now()}` };
 };
 
@@ -39,7 +38,6 @@ export default function Profile({ navigation }) {
   const { theme, themes } = useTheme();
   const currentTheme = themes[theme];
 
-  // --- helpers de fetch ---
   const fetchRank = useCallback(async () => {
     if (!user?.rank_id) { setRankTitle(''); return; }
     try {

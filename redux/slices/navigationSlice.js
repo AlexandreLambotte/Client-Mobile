@@ -1,4 +1,3 @@
-// redux/slices/navigationSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
@@ -21,20 +20,19 @@ const navigationSlice = createSlice({
     setLandmarks: (state, action) => {
       // payload: [{ id, label, description, latitude, longitude, length_m, err_m }, ...]
       state.landmarks = Array.isArray(action.payload) ? action.payload : [];
-      state.selectedPOIs = []; // on repart propre
+      state.selectedPOIs = [];
     },
     togglePOI: (state, action) => {
       const id = action.payload;
       if (state.selectedPOIs.includes(id)) {
         state.selectedPOIs = state.selectedPOIs.filter(x => x !== id);
       } else {
-        // si tu n'autorises qu’un seul POI à la fois
+        // autorise un seul POI à la fois
         state.selectedPOIs = [id];
       }
     },
     resetNavigation: (state) => {
       state.selectedPOIs = [];
-      // garde start/end/landmarks si besoin, sinon décommente:
       // state.start = null;
       // state.end = null;
       // state.landmarks = [];

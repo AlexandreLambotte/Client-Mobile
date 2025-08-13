@@ -1,6 +1,13 @@
-// screens/Map.jsx
-import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Alert, Platform } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Alert,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector, useDispatch } from 'react-redux';
@@ -12,46 +19,62 @@ import LandmarkPreview from '../components/map/LandmarkPreview';
 import TopActions from '../components/map/TopActions';
 import { sendFixedSteps } from '../services/stepslog';
 import { saveFavoriteRoute } from '../services/favroute';
+import { useRoute } from '@react-navigation/native';
 
 const MAPTILER_KEY = 'c85HpwKv5LkEDtV27XeH';
 const API_BASE = process.env.API_BASE;
 
 export default function Map({ navigation }) {
-  // état itinéraire + réponse ORS brute pour l’enregistrement de trajet
+  // Polyline + ORS complet (pour sauvegarde trajet)
   const [route, setRoute] = useState([]);
   const [distance, setDistance] = useState(null);
   const [duration, setDuration] = useState(null);
   const [fullORS, setFullORS] = useState(null);
 
-  // aperçu POI (avant confirmation)
+  // Aperçu POI + UI
   const [candidatePOI, setCandidatePOI] = useState(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [showUpdated, setShowUpdated] = useState(false);
 
+  // Démarrage/arrêt du trajet (contrôle UI)
+  const [isRunning, setIsRunning] = useState(false);
+
+  // Thème + store
   const dispatch = useDispatch();
   const { theme, themes } = useTheme();
   const currentTheme = themes[theme];
 
-  // store
   const start = useSelector((s) => s.navigation.start);
   const end = useSelector((s) => s.navigation.end);
   const landmarks = useSelector((s) => s.navigation.landmarks);
   const selectedPOIs = useSelector((s) => s.navigation.selectedPOIs);
   const { token, user } = useSelector((s) => s.auth);
 
-  // calcule si un trajet est prêt
   const isRouteStarted = !!(start && end);
 
-  // callback de SimpleRoute: met à jour l’itinéraire + conserve la réponse ORS
+  // Récupère un éventuel favori passé depuis RouteSetup
+  const { params } = useRoute();
+  useEffect(() => {
+    const fav = params?.favoriteRoute;
+    if (fav?.coords?.length) {
+      setRoute(fav.coords);
+      // on laisse SimpleRoute recalc quand même (pour durée/distance exactes),
+      // mais on affiche déjà la polyline du favori
+    }
+  }, [params?.favoriteRoute]);
+
   const onRouteCalculated = (coords, dist, dur, ors) => {
     setRoute(coords);
     setDistance(dist);
     setDuration(dur);
     setFullORS(ors || null);
+    if (isCalculating) setIsCalculating(false);
+    setShowUpdated(true);
+    setTimeout(() => setShowUpdated(false), 1500);
   };
 
-  // estimateur des pas à partir de la distance
+  // Estimations
   const estimatedSteps = distance ? Math.round(distance / 0.75) : null;
-
-  // estimation “rapide” d’un POI proposée par /landmark/best
   const previewEstimates = useMemo(() => {
     if (!candidatePOI?.length_m) return null;
     const m = Number(candidatePOI.length_m);
@@ -61,44 +84,48 @@ export default function Map({ navigation }) {
     return { m, km, steps, minutes };
   }, [candidatePOI]);
 
-  // ouvre la fiche d’aperçu d’un POI
+  // POI preview
   const handleMarkerPress = (lm) => setCandidatePOI(lm);
-
-  // confirme un POI (remplace l’existant) sans relancer la saisie départ/arrivée
-  const confirmPOI = () => {
+  const confirmPOICommon = () => {
     if (!candidatePOI) return;
     if (selectedPOIs.length === 1 && selectedPOIs[0] === candidatePOI.id) {
       setCandidatePOI(null);
       return;
     }
+    setIsCalculating(true);
     dispatch(resetNavigation());
     setTimeout(() => {
       dispatch(togglePOI(candidatePOI.id));
       setCandidatePOI(null);
     }, 0);
   };
-
-  // confirme un POI et démarre (si départ/arrivée définis)
+  const confirmPOI = () => confirmPOICommon();
   const confirmPOIAndStart = () => {
-    if (!candidatePOI) return;
     if (!start || !end) {
       Alert.alert('Trajet incomplet', "Définissez d'abord le départ et la destination.");
       return;
     }
-    dispatch(resetNavigation());
-    setTimeout(() => {
-      dispatch(togglePOI(candidatePOI.id));
-      setCandidatePOI(null);
-    }, 0);
+    confirmPOICommon();
+    setIsRunning(true);
   };
-
-  // efface le détour en cours
   const resetDetour = () => {
     dispatch(resetNavigation());
     setCandidatePOI(null);
   };
 
-  // enregistre 2500 pas via API (POST puis fallback 409 -> GET last -> PATCH)
+  // Start/Stop
+  const onStartTrip = () => {
+    if (!isRouteStarted) {
+      Alert.alert('Trajet incomplet', "Définissez d'abord départ et destination.");
+      return;
+    }
+    setIsRunning(true);
+  };
+  const onStopTrip = () => {
+    setIsRunning(false);
+  };
+
+  // API : 2500 pas + favoris
   const onSendSteps = async () => {
     if (!isRouteStarted) {
       Alert.alert('Trajet incomplet', "Définissez d'abord départ et destination.");
@@ -111,35 +138,27 @@ export default function Map({ navigation }) {
       Alert.alert('Erreur', e.message || "Impossible d'enregistrer les pas.");
     }
   };
-
-  // enregistre le trajet courant comme favori (segments ORS + adresses)
   const onSaveRoute = async () => {
     if (!isRouteStarted || !route.length || !fullORS) {
       Alert.alert('Trajet', 'Aucun trajet à enregistrer.');
       return;
     }
     try {
-      await saveFavoriteRoute({
-        token,
-        user,
-        apiBase: API_BASE,
-        ors: fullORS,
-        polyline: route,
-      });
+      await saveFavoriteRoute({ token, user, apiBase: API_BASE, ors: fullORS, polyline: route });
       Alert.alert('Succès', 'Trajet enregistré comme favori.');
     } catch (e) {
       Alert.alert('Erreur', e.message || "Impossible d'enregistrer le trajet.");
     }
   };
 
-  // région initiale pour la carte
+  // Région initiale
   const region = start
     ? { latitude: start.latitude, longitude: start.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 }
     : { latitude: 50.4667, longitude: 4.867, latitudeDelta: 0.05, longitudeDelta: 0.05 };
 
   return (
     <View style={styles.container}>
-      <MapView style={styles.map} initialRegion={region}>
+      <MapView style={styles.map} initialRegion={region} showsUserLocation>
         <UrlTile
           urlTemplate={`https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`}
           maximumZ={19}
@@ -203,16 +222,44 @@ export default function Map({ navigation }) {
 
       {isRouteStarted && (
         <>
+          {/* Démarrer / Stopper */}
+          {!isRunning ? (
+            <TouchableOpacity style={[styles.fab, { bottom: 164 }]} onPress={onStartTrip}>
+              <Ionicons name="play" size={18} color="#2D2D2D" />
+              <Text style={styles.fabText}>Démarrer le trajet</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={[styles.fab, { bottom: 164, backgroundColor: '#FF8585' }]} onPress={onStopTrip}>
+              <Ionicons name="stop" size={18} color="#2D2D2D" />
+              <Text style={styles.fabText}>Stopper le trajet</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* 2500 pas */}
           <TouchableOpacity style={[styles.fab, { bottom: 60 }]} onPress={onSendSteps}>
             <Ionicons name="walk" size={18} color="#2D2D2D" />
             <Text style={styles.fabText}>Enregistrer 2500 pas</Text>
           </TouchableOpacity>
 
+          {/* Enregistrer trajet */}
           <TouchableOpacity style={[styles.fab, { bottom: 112 }]} onPress={onSaveRoute}>
             <Ionicons name="save" size={18} color="#2D2D2D" />
             <Text style={styles.fabText}>Enregistrer ce trajet</Text>
           </TouchableOpacity>
         </>
+      )}
+
+      {isCalculating && (
+        <View style={styles.loaderOverlay}>
+          <ActivityIndicator size="large" color="#2D2D2D" />
+          <Text style={styles.loaderText}>Calcul de l’itinéraire…</Text>
+        </View>
+      )}
+
+      {showUpdated && (
+        <View style={styles.updatedBanner}>
+          <Text style={styles.updatedText}>Itinéraire mis à jour</Text>
+        </View>
       )}
 
       <View style={styles.attrib}>
@@ -225,9 +272,11 @@ export default function Map({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+
+  // décalée pour ne pas être masquée par les FABs
   infoBox: {
     position: 'absolute',
-    bottom: 120,
+    bottom: 220,
     left: 20,
     right: 20,
     backgroundColor: '#ffffffcc',
@@ -236,6 +285,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoText: { fontSize: 16, fontWeight: '600', color: '#2D2D2D' },
+
   fab: {
     position: 'absolute',
     right: 16,
@@ -248,6 +298,27 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   fabText: { marginLeft: 6, fontWeight: 'bold', color: '#2D2D2D' },
+
+  loaderOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#00000033',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loaderText: { marginTop: 10, color: '#2D2D2D', fontWeight: '600' },
+
+  updatedBanner: {
+    position: 'absolute',
+    top: Platform.select({ ios: 90, android: 60 }),
+    alignSelf: 'center',
+    backgroundColor: '#2D2D2D',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  updatedText: { color: '#FFD941', fontWeight: '700' },
+
   attrib: {
     position: 'absolute',
     bottom: 6,

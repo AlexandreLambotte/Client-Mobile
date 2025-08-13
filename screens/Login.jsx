@@ -37,7 +37,6 @@ export default function Login() {
       }
 
       const data = await response.json();
-      // data doit contenir { token, user } ; on va recharger le user complet
       const token = data.token;
       const loggedUser = data.user;
 
@@ -51,9 +50,6 @@ export default function Login() {
         // 2) Stocke token + user COMPLET en Redux
         dispatch(login({ token, user: result.payload }));
       }
-
-      // Si tu as une navigation automatique, elle se déclenchera comme avant
-      // (ton routeur doit lire isAuthenticated/token côté Redux)
     } catch (error) {
       console.error('Login Error:', error);
       Alert.alert('Error', 'Unable to connect to the server. Please try again.');

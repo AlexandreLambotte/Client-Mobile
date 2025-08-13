@@ -1,6 +1,4 @@
-// services/stepslog.js
-
-/** Crée ou met à jour (409) le log de pas du jour pour l’utilisateur. */
+// Crée ou met à jour le log de pas du jour pour l’utilisateur.
 export async function sendFixedSteps({ token, user, apiBase, steps = 2500 }) {
   if (!token || !user?.id) throw new Error('Session invalide');
   const today = new Date().toISOString().slice(0, 10);
@@ -44,6 +42,6 @@ export async function sendFixedSteps({ token, user, apiBase, steps = 2500 }) {
     throw new Error(txt || 'Erreur API');
   }
 
-  // facultatif: retourner une info utilisable par l’écran
+  //retourne une info utilisable par l’écran
   return { ok: true, stepsAdded: steps };
 }

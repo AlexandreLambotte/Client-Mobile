@@ -13,7 +13,6 @@ import Settings from '../screens/Settings';
 const Tab = createBottomTabNavigator();
 const MapStack = createNativeStackNavigator();
 
-// ✅ Small stack for the Map flow: RouteSetup -> Map
 function MapFlow() {
   return (
     <MapStack.Navigator initialRouteName="RouteSetup" screenOptions={{ headerShown: false }}>
@@ -32,7 +31,7 @@ export default function BottomTabNavigator() {
 
   return (
     <Tab.Navigator
-      initialRouteName="Map" // ✅ open the Map flow (which starts on RouteSetup)
+      initialRouteName="Map"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
@@ -50,7 +49,6 @@ export default function BottomTabNavigator() {
       })}
     >
       <Tab.Screen name="Profile" component={Profile} />
-      {/* ✅ Replace Map screen with the Map flow */}
       <Tab.Screen name="Map" component={MapFlow} />
       <Tab.Screen name="Settings" component={Settings} />
     </Tab.Navigator>

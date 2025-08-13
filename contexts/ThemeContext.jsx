@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 
-// Créez le contexte
+// Crée le contexte
 export const ThemeContext = createContext();
 
 // Composant Provider pour fournir le contexte
@@ -13,14 +13,14 @@ export default function ThemeProvider({ children }) {
             backgroundColor: '#FFFFFF',
             gradientColor: 'rgba(255, 255, 255, 0)',
             textColor: '#232323',
-            cardColor: '#E9E9E9', // Couleur spécifique pour les rectangles en thème clair
+            cardColor: '#E9E9E9', 
             activeColor: '#232323',
         },
         dark: {
             backgroundColor: '#232323',
             gradientColor: 'rgba(35, 35, 35, 0)',
             textColor: '#FFD941',
-            cardColor: '#2D2D2D', // Couleur spécifique pour les rectangles en thème sombre
+            cardColor: '#2D2D2D', 
             activeColor: '#FFFFFF',
         },
     };

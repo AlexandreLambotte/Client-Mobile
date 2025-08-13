@@ -1,9 +1,8 @@
-// components/map/TopActions.jsx
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-/** Affiche les actions globales de la carte (changer le trajet, réinitialiser le détour). */
+// Affiche les actions globales de la carte (changer le trajet, réinitialiser le détour).
 export default function TopActions({ onChangeRoute, onResetDetour, theme }) {
   return (
     <View style={styles.container}>

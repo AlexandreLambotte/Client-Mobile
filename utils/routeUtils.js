@@ -1,7 +1,6 @@
-// utils/routeUtils.js
 import { reverseGeocode } from '../utils/geolocation';
 
-/** Transforme la réponse ORS en segments d’instructions compatibles API favorite route. */
+// Transforme la réponse ORS en segments d’instructions compatibles API favorite route.
 export function buildSegmentsFromORS(ors) {
   if (!ors?.features?.length) return [];
   const feat = ors.features[0];
@@ -28,7 +27,7 @@ export function buildSegmentsFromORS(ors) {
   });
 }
 
-/** Convertit lat/lon en adresse normalisée pour l’API favorite route. */
+//Convertit lat/lon en adresse normalisée pour l’API favorite route.
 export async function resolveAddress(lat, lon) {
   try {
     const addr = await reverseGeocode(lat, lon);
